@@ -1,11 +1,16 @@
 import { App } from 'aws-cdk-lib';
 import { Template } from 'aws-cdk-lib/assertions';
-import { MyStack } from '../src/main';
+import { BackEnd } from '../src/backend';
+import { FrontEnd } from '../src/frontend';
 
 test('Snapshot', () => {
   const app = new App();
-  const stack = new MyStack(app, 'test');
+  const frontEnedStack = new FrontEnd(app, 'FrontEnd');
+  const backEndStack = new BackEnd(app, 'BackEnd');
 
-  const template = Template.fromStack(stack);
-  expect(template.toJSON()).toMatchSnapshot();
+  const frontEndTemplate = Template.fromStack(frontEnedStack);
+  expect(frontEndTemplate.toJSON()).toMatchSnapshot();
+
+  const backEndTemplate = Template.fromStack(backEndStack);
+  expect(backEndTemplate.toJSON()).toMatchSnapshot();
 });
