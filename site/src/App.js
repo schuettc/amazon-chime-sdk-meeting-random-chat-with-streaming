@@ -125,10 +125,10 @@ const App = () => {
 
     return (
         <NorthStarThemeProvider>
-            <Header title="Amazon Chime SDK Meeting Random Chat with Streaming" />
+            <Header title="Amazon Chime SDK Meeting with Live Connector" />
 
             <div id="video">
-                <div style={{ padding: '1rem', height: '35vh', boxSizing: 'border-box' }}>
+                <div style={{ padding: '1rem', height: '35vh', width: '70vh', boxSizing: 'border-box' }}>
                     <VideoGrid size={2}>
                         <LocalVideo
                             nameplate="Me"

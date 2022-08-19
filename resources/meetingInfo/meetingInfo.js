@@ -16,8 +16,15 @@ const unmarshallOptions = {
 const translateConfig = { marshallOptions, unmarshallOptions };
 const ddbDocClient = DynamoDBDocumentClient.from(ddbClient, translateConfig);
 var { randomUUID } = require('crypto');
-import { IvsClient } from '@aws-sdk/client-ivs';
-import { ChimeSDKMediaPipelinesClient } from '@aws-sdk/client-chime-sdk-media-pipelines';
+import {
+  IvsClient,
+  CreateChannelCommand,
+  GetStreamCommand,
+} from '@aws-sdk/client-ivs';
+import {
+  ChimeSDKMediaPipelinesClient,
+  CreateMediaLiveConnectorPipelineCommand,
+} from '@aws-sdk/client-chime-sdk-media-pipelines';
 const {
   ChimeSDKMeetingsClient,
   CreateAttendeeCommand,
@@ -89,28 +96,34 @@ exports.handler = async function (event, context) {
   if (event.resource == '/stream') {
     let meetingId = JSON.parse(event.body).meetingId;
     const awsAccountId = context.invokedFunctionArn.split(':')[4];
-    const createChannelCommand = new ivsClient.CreateChannelCommand(
+
+    const createChannelCommand = new CreateChannelCommand(
       createAttendeeCommandInput,
     );
 
     const createChannelResponse = await ivsClient.send(createChannelCommand);
+
     createMediaCapturePipelineCommandInput.Sources[0].ChimeSdkMeetingLiveConnectorConfiguration.Arn = `arn:aws:chime::${awsAccountId}:meeting:${meetingId}`;
     createMediaCapturePipelineCommandInput.Sinks[0].RTMPConfiguration.Url =
       'rtmps://' +
       createChannelResponse.channel.ingestEndpoint +
       ':443/app/' +
       createChannelResponse.streamKey.value;
+
     console.log(JSON.stringify(createMediaCapturePipelineCommandInput));
-    const createPipelineCommand =
-      new chimeSdkMediaPipelineclient.CreateMediaLiveConnectorPipelineCommand(
-        createMediaCapturePipelineCommandInput,
-      );
+
+    const createPipelineCommand = new CreateMediaLiveConnectorPipelineCommand(
+      createMediaCapturePipelineCommandInput,
+    );
+
     const createPipelineResponse = await chimeSdkMediaPipelineclient.send(
       createPipelineCommand,
     );
+
     console.log(createPipelineResponse);
-    const getStreamCommand = new ivsClient.getStreamCommand({
-      channelArn: createChannelResponse.stream.Arn,
+
+    const getStreamCommand = new GetStreamCommand({
+      channelArn: createChannelResponse.channel.arn,
     });
 
     for (var m = 0; m < 5; m++) {
