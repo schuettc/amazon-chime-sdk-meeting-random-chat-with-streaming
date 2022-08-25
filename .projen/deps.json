@@ -80,6 +80,10 @@
       "type": "build"
     },
     {
+      "name": "@aws-cdk/aws-appsync-alpha",
+      "type": "runtime"
+    },
+    {
       "name": "@types/fs-extra",
       "type": "runtime"
     },

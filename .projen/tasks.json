@@ -133,7 +133,7 @@
       "name": "getBucket",
       "steps": [
         {
-          "exec": "aws cloudformation describe-stacks --stack-name ChimeWStreamingFrontEnd --query 'Stacks[0].Outputs[?OutputKey==`siteBucket`].OutputValue' --output text"
+          "exec": "aws cloudformation describe-stacks --stack-name AmazonChimeSDKWithLiveConnector --query 'Stacks[0].Outputs[?OutputKey==`siteBucket`].OutputValue' --output text"
         }
       ]
     },
@@ -141,7 +141,7 @@
       "name": "launch",
       "steps": [
         {
-          "exec": "yarn && yarn projen && yarn build && yarn cdk bootstrap && yarn cdk deploy ChimeWStreamingBackEnd && yarn cdk deploy ChimeWStreamingFrontEnd && yarn configLocal"
+          "exec": "yarn && yarn projen && yarn build && yarn cdk bootstrap && yarn cdk deploy --hotswap && yarn configLocal"
         }
       ]
     },

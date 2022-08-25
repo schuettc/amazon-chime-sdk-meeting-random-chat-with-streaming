@@ -18,8 +18,9 @@ function AmazonIVS(options) {
                 // eslint-disable-next-line no-undef
                 const player = IVSPlayer.create();
                 player.attachHTMLVideoElement(document.getElementById('video-player'));
-                console.log(options.playbackUrl);
-                player.load(options.playbackUrl);
+                const fixedPlaybackUrl = options.playbackUrl.replace(/"/g, '');
+                console.log(fixedPlaybackUrl);
+                player.load(fixedPlaybackUrl);
                 player.play();
             }
         };

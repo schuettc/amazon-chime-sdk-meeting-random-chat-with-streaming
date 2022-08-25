@@ -6,14 +6,40 @@ Object {
     "distribution": Object {
       "Value": Object {
         "Fn::GetAtt": Array [
-          "CloudfrontDistributionE1C514EC",
+          "SiteCloudfrontDistribution0794B6B8",
           "DomainName",
+        ],
+      },
+    },
+    "infrastructureChimeSDKMeetingAPIEndpointA3077C32": Object {
+      "Value": Object {
+        "Fn::Join": Array [
+          "",
+          Array [
+            "https://",
+            Object {
+              "Ref": "infrastructureChimeSDKMeetingAPI0524B384",
+            },
+            ".execute-api.",
+            Object {
+              "Ref": "AWS::Region",
+            },
+            ".",
+            Object {
+              "Ref": "AWS::URLSuffix",
+            },
+            "/",
+            Object {
+              "Ref": "infrastructureChimeSDKMeetingAPIDeploymentStageprodDDE3819A",
+            },
+            "/",
+          ],
         ],
       },
     },
     "siteBucket": Object {
       "Value": Object {
-        "Ref": "websiteBucket74B0F9E5",
+        "Ref": "SitewebsiteBucketBC20A569",
       },
     },
   },
@@ -25,203 +51,6 @@ Object {
     },
   },
   "Resources": Object {
-    "AWS679f53fac002430cb0da5b7982bd22872D164C4C": Object {
-      "DependsOn": Array [
-        "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2",
-      ],
-      "Properties": Object {
-        "Code": Object {
-          "S3Bucket": Object {
-            "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
-          },
-          "S3Key": "6dbd112fe448437b3438da4382c72fccbb7d2ee1543db222620d7447fffebc50.zip",
-        },
-        "Handler": "index.handler",
-        "Role": Object {
-          "Fn::GetAtt": Array [
-            "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2",
-            "Arn",
-          ],
-        },
-        "Runtime": "nodejs14.x",
-        "Timeout": 120,
-      },
-      "Type": "AWS::Lambda::Function",
-    },
-    "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2": Object {
-      "Properties": Object {
-        "AssumeRolePolicyDocument": Object {
-          "Statement": Array [
-            Object {
-              "Action": "sts:AssumeRole",
-              "Effect": "Allow",
-              "Principal": Object {
-                "Service": "lambda.amazonaws.com",
-              },
-            },
-          ],
-          "Version": "2012-10-17",
-        },
-        "ManagedPolicyArns": Array [
-          Object {
-            "Fn::Join": Array [
-              "",
-              Array [
-                "arn:",
-                Object {
-                  "Ref": "AWS::Partition",
-                },
-                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
-              ],
-            ],
-          },
-        ],
-      },
-      "Type": "AWS::IAM::Role",
-    },
-    "CloudfrontDistributionE1C514EC": Object {
-      "Properties": Object {
-        "DistributionConfig": Object {
-          "DefaultCacheBehavior": Object {
-            "CachePolicyId": "4135ea2d-6df8-44a3-9df3-4b5a84be39ad",
-            "Compress": true,
-            "TargetOriginId": "FrontEndCloudfrontDistributionOrigin1F60BED5C",
-            "ViewerProtocolPolicy": "redirect-to-https",
-          },
-          "DefaultRootObject": "index.html",
-          "Enabled": true,
-          "HttpVersion": "http2",
-          "IPV6Enabled": true,
-          "Logging": Object {
-            "Bucket": Object {
-              "Fn::GetAtt": Array [
-                "CloudfrontDistributionLoggingBucketC7C0DD61",
-                "RegionalDomainName",
-              ],
-            },
-          },
-          "Origins": Array [
-            Object {
-              "DomainName": Object {
-                "Fn::GetAtt": Array [
-                  "websiteBucket74B0F9E5",
-                  "RegionalDomainName",
-                ],
-              },
-              "Id": "FrontEndCloudfrontDistributionOrigin1F60BED5C",
-              "S3OriginConfig": Object {
-                "OriginAccessIdentity": Object {
-                  "Fn::Join": Array [
-                    "",
-                    Array [
-                      "origin-access-identity/cloudfront/",
-                      Object {
-                        "Ref": "CloudfrontDistributionOrigin1S3Origin80C6EA5F",
-                      },
-                    ],
-                  ],
-                },
-              },
-            },
-          ],
-        },
-      },
-      "Type": "AWS::CloudFront::Distribution",
-    },
-    "CloudfrontDistributionLoggingBucketC7C0DD61": Object {
-      "DeletionPolicy": "Retain",
-      "Properties": Object {
-        "BucketEncryption": Object {
-          "ServerSideEncryptionConfiguration": Array [
-            Object {
-              "ServerSideEncryptionByDefault": Object {
-                "SSEAlgorithm": "AES256",
-              },
-            },
-          ],
-        },
-      },
-      "Type": "AWS::S3::Bucket",
-      "UpdateReplacePolicy": "Retain",
-    },
-    "CloudfrontDistributionOrigin1S3Origin80C6EA5F": Object {
-      "Properties": Object {
-        "CloudFrontOriginAccessIdentityConfig": Object {
-          "Comment": "Identity for FrontEndCloudfrontDistributionOrigin1F60BED5C",
-        },
-      },
-      "Type": "AWS::CloudFront::CloudFrontOriginAccessIdentity",
-    },
-    "ConfigFrontEnd359F460A": Object {
-      "DeletionPolicy": "Delete",
-      "DependsOn": Array [
-        "ConfigFrontEndCustomResourcePolicyD9A2DBD8",
-      ],
-      "Properties": Object {
-        "Create": Object {
-          "Fn::Join": Array [
-            "",
-            Array [
-              "{\\"service\\":\\"S3\\",\\"action\\":\\"putObject\\",\\"parameters\\":{\\"Body\\":\\"{\\\\\\"apiUrl\\\\\\":\\\\\\"",
-              Object {
-                "Fn::ImportValue": "randomChatWithStreamingApiUrl",
-              },
-              "\\\\\\"}\\",\\"Bucket\\":\\"",
-              Object {
-                "Ref": "websiteBucket74B0F9E5",
-              },
-              "\\",\\"Key\\":\\"config.json\\"},\\"physicalResourceId\\":{\\"id\\":\\"1660947750037\\"}}",
-            ],
-          ],
-        },
-        "InstallLatestAwsSdk": true,
-        "ServiceToken": Object {
-          "Fn::GetAtt": Array [
-            "AWS679f53fac002430cb0da5b7982bd22872D164C4C",
-            "Arn",
-          ],
-        },
-        "Update": Object {
-          "Fn::Join": Array [
-            "",
-            Array [
-              "{\\"service\\":\\"S3\\",\\"action\\":\\"putObject\\",\\"parameters\\":{\\"Body\\":\\"{\\\\\\"apiUrl\\\\\\":\\\\\\"",
-              Object {
-                "Fn::ImportValue": "randomChatWithStreamingApiUrl",
-              },
-              "\\\\\\"}\\",\\"Bucket\\":\\"",
-              Object {
-                "Ref": "websiteBucket74B0F9E5",
-              },
-              "\\",\\"Key\\":\\"config.json\\"},\\"physicalResourceId\\":{\\"id\\":\\"1660947750037\\"}}",
-            ],
-          ],
-        },
-      },
-      "Type": "Custom::AWS",
-      "UpdateReplacePolicy": "Delete",
-    },
-    "ConfigFrontEndCustomResourcePolicyD9A2DBD8": Object {
-      "Properties": Object {
-        "PolicyDocument": Object {
-          "Statement": Array [
-            Object {
-              "Action": "s3:PutObject",
-              "Effect": "Allow",
-              "Resource": "*",
-            },
-          ],
-          "Version": "2012-10-17",
-        },
-        "PolicyName": "ConfigFrontEndCustomResourcePolicyD9A2DBD8",
-        "Roles": Array [
-          Object {
-            "Ref": "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2",
-          },
-        ],
-      },
-      "Type": "AWS::IAM::Policy",
-    },
     "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536": Object {
       "DependsOn": Array [
         "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF",
@@ -237,7 +66,7 @@ Object {
         "Handler": "index.handler",
         "Layers": Array [
           Object {
-            "Ref": "DeployBucketAwsCliLayerF2A9A1EB",
+            "Ref": "SiteDeployBucketAwsCliLayerB1A3335C",
           },
         ],
         "Role": Object {
@@ -344,7 +173,7 @@ Object {
               "Resource": Array [
                 Object {
                   "Fn::GetAtt": Array [
-                    "websiteBucket74B0F9E5",
+                    "SitewebsiteBucketBC20A569",
                     "Arn",
                   ],
                 },
@@ -354,7 +183,7 @@ Object {
                     Array [
                       Object {
                         "Fn::GetAtt": Array [
-                          "websiteBucket74B0F9E5",
+                          "SitewebsiteBucketBC20A569",
                           "Arn",
                         ],
                       },
@@ -401,7 +230,7 @@ Object {
             Array [
               "Lambda function for auto-deleting objects in ",
               Object {
-                "Ref": "websiteBucket74B0F9E5",
+                "Ref": "SitewebsiteBucketBC20A569",
               },
               " S3 bucket.",
             ],
@@ -442,7 +271,80 @@ Object {
       },
       "Type": "AWS::IAM::Role",
     },
-    "DeployBucketAwsCliLayerF2A9A1EB": Object {
+    "SiteCloudfrontDistribution0794B6B8": Object {
+      "Properties": Object {
+        "DistributionConfig": Object {
+          "DefaultCacheBehavior": Object {
+            "CachePolicyId": "4135ea2d-6df8-44a3-9df3-4b5a84be39ad",
+            "Compress": true,
+            "TargetOriginId": "AmazonChimeSDKWithLiveConnectorSiteCloudfrontDistributionOrigin1F54AE78F",
+            "ViewerProtocolPolicy": "redirect-to-https",
+          },
+          "DefaultRootObject": "index.html",
+          "Enabled": true,
+          "HttpVersion": "http2",
+          "IPV6Enabled": true,
+          "Logging": Object {
+            "Bucket": Object {
+              "Fn::GetAtt": Array [
+                "SiteCloudfrontDistributionLoggingBucket0054AC66",
+                "RegionalDomainName",
+              ],
+            },
+          },
+          "Origins": Array [
+            Object {
+              "DomainName": Object {
+                "Fn::GetAtt": Array [
+                  "SitewebsiteBucketBC20A569",
+                  "RegionalDomainName",
+                ],
+              },
+              "Id": "AmazonChimeSDKWithLiveConnectorSiteCloudfrontDistributionOrigin1F54AE78F",
+              "S3OriginConfig": Object {
+                "OriginAccessIdentity": Object {
+                  "Fn::Join": Array [
+                    "",
+                    Array [
+                      "origin-access-identity/cloudfront/",
+                      Object {
+                        "Ref": "SiteCloudfrontDistributionOrigin1S3Origin4F2AB6D1",
+                      },
+                    ],
+                  ],
+                },
+              },
+            },
+          ],
+        },
+      },
+      "Type": "AWS::CloudFront::Distribution",
+    },
+    "SiteCloudfrontDistributionLoggingBucket0054AC66": Object {
+      "DeletionPolicy": "Retain",
+      "Properties": Object {
+        "BucketEncryption": Object {
+          "ServerSideEncryptionConfiguration": Array [
+            Object {
+              "ServerSideEncryptionByDefault": Object {
+                "SSEAlgorithm": "AES256",
+              },
+            },
+          ],
+        },
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "SiteCloudfrontDistributionOrigin1S3Origin4F2AB6D1": Object {
+      "Properties": Object {
+        "CloudFrontOriginAccessIdentityConfig": Object {
+          "Comment": "Identity for AmazonChimeSDKWithLiveConnectorSiteCloudfrontDistributionOrigin1F54AE78F",
+        },
+      },
+      "Type": "AWS::CloudFront::CloudFrontOriginAccessIdentity",
+    },
+    "SiteDeployBucketAwsCliLayerB1A3335C": Object {
       "Properties": Object {
         "Content": Object {
           "S3Bucket": Object {
@@ -454,19 +356,19 @@ Object {
       },
       "Type": "AWS::Lambda::LayerVersion",
     },
-    "DeployBucketCustomResourceC9B80175": Object {
+    "SiteDeployBucketCustomResource08EC962A": Object {
       "DeletionPolicy": "Delete",
       "Properties": Object {
         "DestinationBucketName": Object {
-          "Ref": "websiteBucket74B0F9E5",
+          "Ref": "SitewebsiteBucketBC20A569",
         },
         "DistributionId": Object {
-          "Ref": "CloudfrontDistributionE1C514EC",
+          "Ref": "SiteCloudfrontDistribution0794B6B8",
         },
         "DistributionPaths": Array [
           "/*",
         ],
-        "Prune": false,
+        "Prune": true,
         "ServiceToken": Object {
           "Fn::GetAtt": Array [
             "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
@@ -477,39 +379,43 @@ Object {
           Object {
             "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
           },
+          Object {
+            "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
+          },
+        ],
+        "SourceMarkers": Array [
+          Object {},
+          Object {
+            "<<marker:0xbaba:0>>": Object {
+              "Ref": "infrastructureChimeSDKMeetingAPI0524B384",
+            },
+            "<<marker:0xbaba:1>>": Object {
+              "Ref": "AWS::Region",
+            },
+            "<<marker:0xbaba:2>>": Object {
+              "Ref": "AWS::URLSuffix",
+            },
+            "<<marker:0xbaba:3>>": Object {
+              "Ref": "infrastructureChimeSDKMeetingAPIDeploymentStageprodDDE3819A",
+            },
+          },
         ],
         "SourceObjectKeys": Array [
-          "7a7186051d6fce65e10ce6d1aa0a88442a57c9ea66cd43064f9d42482578f7da.zip",
+          "1673835c126819b0976c1ae1c8cb0d09f29b0f65932dd3c8fa8398fc7cf32abc.zip",
+          "54db0af5da74dab89a93c249167c5b162223925d4c9385ff9262a09b67c99244.zip",
         ],
       },
       "Type": "Custom::CDKBucketDeployment",
       "UpdateReplacePolicy": "Delete",
     },
-    "websiteBucket74B0F9E5": Object {
-      "DeletionPolicy": "Delete",
-      "Properties": Object {
-        "Tags": Array [
-          Object {
-            "Key": "aws-cdk:auto-delete-objects",
-            "Value": "true",
-          },
-          Object {
-            "Key": "aws-cdk:cr-owned:c97ebe1f",
-            "Value": "true",
-          },
-        ],
-      },
-      "Type": "AWS::S3::Bucket",
-      "UpdateReplacePolicy": "Delete",
-    },
-    "websiteBucketAutoDeleteObjectsCustomResource3492E703": Object {
+    "SitewebsiteBucketAutoDeleteObjectsCustomResourceB62EAF63": Object {
       "DeletionPolicy": "Delete",
       "DependsOn": Array [
-        "websiteBucketPolicy112A7E46",
+        "SitewebsiteBucketPolicyC20F0243",
       ],
       "Properties": Object {
         "BucketName": Object {
-          "Ref": "websiteBucket74B0F9E5",
+          "Ref": "SitewebsiteBucketBC20A569",
         },
         "ServiceToken": Object {
           "Fn::GetAtt": Array [
@@ -521,10 +427,27 @@ Object {
       "Type": "Custom::S3AutoDeleteObjects",
       "UpdateReplacePolicy": "Delete",
     },
-    "websiteBucketPolicy112A7E46": Object {
+    "SitewebsiteBucketBC20A569": Object {
+      "DeletionPolicy": "Delete",
+      "Properties": Object {
+        "Tags": Array [
+          Object {
+            "Key": "aws-cdk:auto-delete-objects",
+            "Value": "true",
+          },
+          Object {
+            "Key": "aws-cdk:cr-owned:a2643d0d",
+            "Value": "true",
+          },
+        ],
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "SitewebsiteBucketPolicyC20F0243": Object {
       "Properties": Object {
         "Bucket": Object {
-          "Ref": "websiteBucket74B0F9E5",
+          "Ref": "SitewebsiteBucketBC20A569",
         },
         "PolicyDocument": Object {
           "Statement": Array [
@@ -546,7 +469,7 @@ Object {
               "Resource": Array [
                 Object {
                   "Fn::GetAtt": Array [
-                    "websiteBucket74B0F9E5",
+                    "SitewebsiteBucketBC20A569",
                     "Arn",
                   ],
                 },
@@ -556,7 +479,7 @@ Object {
                     Array [
                       Object {
                         "Fn::GetAtt": Array [
-                          "websiteBucket74B0F9E5",
+                          "SitewebsiteBucketBC20A569",
                           "Arn",
                         ],
                       },
@@ -572,7 +495,7 @@ Object {
               "Principal": Object {
                 "CanonicalUser": Object {
                   "Fn::GetAtt": Array [
-                    "CloudfrontDistributionOrigin1S3Origin80C6EA5F",
+                    "SiteCloudfrontDistributionOrigin1S3Origin4F2AB6D1",
                     "S3CanonicalUserId",
                   ],
                 },
@@ -583,7 +506,7 @@ Object {
                   Array [
                     Object {
                       "Fn::GetAtt": Array [
-                        "websiteBucket74B0F9E5",
+                        "SitewebsiteBucketBC20A569",
                         "Arn",
                       ],
                     },
@@ -598,104 +521,6 @@ Object {
       },
       "Type": "AWS::S3::BucketPolicy",
     },
-  },
-  "Rules": Object {
-    "CheckBootstrapVersion": Object {
-      "Assertions": Array [
-        Object {
-          "Assert": Object {
-            "Fn::Not": Array [
-              Object {
-                "Fn::Contains": Array [
-                  Array [
-                    "1",
-                    "2",
-                    "3",
-                    "4",
-                    "5",
-                  ],
-                  Object {
-                    "Ref": "BootstrapVersion",
-                  },
-                ],
-              },
-            ],
-          },
-          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
-        },
-      ],
-    },
-  },
-}
-`;
-
-exports[`Snapshot 2`] = `
-Object {
-  "Outputs": Object {
-    "apiUrl": Object {
-      "Export": Object {
-        "Name": "randomChatWithStreamingApiUrl",
-      },
-      "Value": Object {
-        "Fn::Join": Array [
-          "",
-          Array [
-            "https://",
-            Object {
-              "Ref": "infrastructureChimeSDKMeetingAPI0524B384",
-            },
-            ".execute-api.",
-            Object {
-              "Ref": "AWS::Region",
-            },
-            ".",
-            Object {
-              "Ref": "AWS::URLSuffix",
-            },
-            "/",
-            Object {
-              "Ref": "infrastructureChimeSDKMeetingAPIDeploymentStageprodDDE3819A",
-            },
-            "/",
-          ],
-        ],
-      },
-    },
-    "infrastructureChimeSDKMeetingAPIEndpointA3077C32": Object {
-      "Value": Object {
-        "Fn::Join": Array [
-          "",
-          Array [
-            "https://",
-            Object {
-              "Ref": "infrastructureChimeSDKMeetingAPI0524B384",
-            },
-            ".execute-api.",
-            Object {
-              "Ref": "AWS::Region",
-            },
-            ".",
-            Object {
-              "Ref": "AWS::URLSuffix",
-            },
-            "/",
-            Object {
-              "Ref": "infrastructureChimeSDKMeetingAPIDeploymentStageprodDDE3819A",
-            },
-            "/",
-          ],
-        ],
-      },
-    },
-  },
-  "Parameters": Object {
-    "BootstrapVersion": Object {
-      "Default": "/cdk-bootstrap/hnb659fds/version",
-      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
-      "Type": "AWS::SSM::Parameter::Value<String>",
-    },
-  },
-  "Resources": Object {
     "infrastructureChimeSDKMeetingAPI0524B384": Object {
       "Properties": Object {
         "EndpointConfiguration": Object {
@@ -896,7 +721,7 @@ Object {
       },
       "Type": "AWS::ApiGateway::Method",
     },
-    "infrastructureChimeSDKMeetingAPIendPOSTApiPermissionBackEndinfrastructureChimeSDKMeetingAPI1958F59DPOSTend689EAC45": Object {
+    "infrastructureChimeSDKMeetingAPIendPOSTApiPermissionAmazonChimeSDKWithLiveConnectorinfrastructureChimeSDKMeetingAPID3917592POSTend482327EC": Object {
       "Properties": Object {
         "Action": "lambda:InvokeFunction",
         "FunctionName": Object {
@@ -937,7 +762,7 @@ Object {
       },
       "Type": "AWS::Lambda::Permission",
     },
-    "infrastructureChimeSDKMeetingAPIendPOSTApiPermissionTestBackEndinfrastructureChimeSDKMeetingAPI1958F59DPOSTendA5447B9B": Object {
+    "infrastructureChimeSDKMeetingAPIendPOSTApiPermissionTestAmazonChimeSDKWithLiveConnectorinfrastructureChimeSDKMeetingAPID3917592POSTend909635CE": Object {
       "Properties": Object {
         "Action": "lambda:InvokeFunction",
         "FunctionName": Object {
@@ -1110,7 +935,7 @@ Object {
       },
       "Type": "AWS::ApiGateway::Method",
     },
-    "infrastructureChimeSDKMeetingAPIjoinPOSTApiPermissionBackEndinfrastructureChimeSDKMeetingAPI1958F59DPOSTjoin3CAC9B91": Object {
+    "infrastructureChimeSDKMeetingAPIjoinPOSTApiPermissionAmazonChimeSDKWithLiveConnectorinfrastructureChimeSDKMeetingAPID3917592POSTjoinD1AEB47F": Object {
       "Properties": Object {
         "Action": "lambda:InvokeFunction",
         "FunctionName": Object {
@@ -1151,7 +976,7 @@ Object {
       },
       "Type": "AWS::Lambda::Permission",
     },
-    "infrastructureChimeSDKMeetingAPIjoinPOSTApiPermissionTestBackEndinfrastructureChimeSDKMeetingAPI1958F59DPOSTjoin137F2A77": Object {
+    "infrastructureChimeSDKMeetingAPIjoinPOSTApiPermissionTestAmazonChimeSDKWithLiveConnectorinfrastructureChimeSDKMeetingAPID3917592POSTjoin9C99007D": Object {
       "Properties": Object {
         "Action": "lambda:InvokeFunction",
         "FunctionName": Object {
@@ -1244,7 +1069,7 @@ Object {
       },
       "Type": "AWS::ApiGateway::Method",
     },
-    "infrastructureChimeSDKMeetingAPIstreamPOSTApiPermissionBackEndinfrastructureChimeSDKMeetingAPI1958F59DPOSTstream37C8AA0E": Object {
+    "infrastructureChimeSDKMeetingAPIstreamPOSTApiPermissionAmazonChimeSDKWithLiveConnectorinfrastructureChimeSDKMeetingAPID3917592POSTstream4AC439FC": Object {
       "Properties": Object {
         "Action": "lambda:InvokeFunction",
         "FunctionName": Object {
@@ -1285,7 +1110,7 @@ Object {
       },
       "Type": "AWS::Lambda::Permission",
     },
-    "infrastructureChimeSDKMeetingAPIstreamPOSTApiPermissionTestBackEndinfrastructureChimeSDKMeetingAPI1958F59DPOSTstream5364A400": Object {
+    "infrastructureChimeSDKMeetingAPIstreamPOSTApiPermissionTestAmazonChimeSDKWithLiveConnectorinfrastructureChimeSDKMeetingAPID3917592POSTstream4BF17D25": Object {
       "Properties": Object {
         "Action": "lambda:InvokeFunction",
         "FunctionName": Object {
@@ -1481,7 +1306,7 @@ Object {
           "S3Bucket": Object {
             "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
           },
-          "S3Key": "cc49966ea9dfbd09b4e9a334c7019a4c3eb5abdbb0fce1f1ed2e01b429441148.zip",
+          "S3Key": "68351e7144567881303055b73837914447f08952191d5274095118b80f726c03.zip",
         },
         "Environment": Object {
           "Variables": Object {
@@ -1489,6 +1314,8 @@ Object {
             "MEETINGS_TABLE": Object {
               "Ref": "infrastructuremeetings3685B870",
             },
+            "TWITCH_INGEST": "rtmp://ord02.contribute.live-video.net/app/",
+            "TWITCH_KEY": "live_675733637_s8eUGj95qIOI3iQmB849dyTEDwkj1V",
           },
         },
         "Handler": "index.handler",

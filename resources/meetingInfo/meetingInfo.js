@@ -16,14 +16,11 @@ const unmarshallOptions = {
 const translateConfig = { marshallOptions, unmarshallOptions };
 const ddbDocClient = DynamoDBDocumentClient.from(ddbClient, translateConfig);
 var { randomUUID } = require('crypto');
-import {
-  IvsClient,
-  CreateChannelCommand,
-  GetStreamCommand,
-} from '@aws-sdk/client-ivs';
+import { IvsClient, CreateChannelCommand } from '@aws-sdk/client-ivs';
 import {
   ChimeSDKMediaPipelinesClient,
   CreateMediaLiveConnectorPipelineCommand,
+  DeleteMediaPipelineCommand,
 } from '@aws-sdk/client-chime-sdk-media-pipelines';
 const {
   ChimeSDKMeetingsClient,
@@ -39,6 +36,8 @@ const chimeSdkMeetings = new ChimeSDKMeetingsClient({
 });
 
 var meetingInfoTable = process.env['MEETINGS_TABLE'];
+var twitchIngest = process.env['TWITCH_INGEST'];
+var twitchKey = process.env['TWITCH_KEY'];
 
 var response = {
   statusCode: 200,
@@ -90,28 +89,54 @@ var createMediaCapturePipelineCommandInput = {
   ],
 };
 
+// var publishMutation = gql`
+//   mutation Publish2channel($data: AWSJSON!, $name: String!) {
+//     publish2channel(data: $data, name: $name) {
+//       data
+//       name
+//     }
+//   }
+// `;
+
 exports.handler = async function (event, context) {
   console.info(event);
 
   if (event.resource == '/stream') {
-    let meetingId = JSON.parse(event.body).meetingId;
+    let meetingId = JSON.parse(event.body).meetingId || '';
+    let streamTarget = JSON.parse(event.body).streamTarget || '';
+    let streamAction = JSON.parse(event.body).streamAction || '';
+    let mediaPipelineId = JSON.parse(event.body).mediaPipelineId || '';
+
+    if (streamAction == 'delete') {
+      const deletePipelineResponse = await chimeSdkMediaPipelineclient.send(
+        new DeleteMediaPipelineCommand({
+          MediaPipelineId: mediaPipelineId,
+        }),
+      );
+      console.log(deletePipelineResponse);
+      response.statusCode = 200;
+      return response;
+    }
     const awsAccountId = context.invokedFunctionArn.split(':')[4];
-
-    const createChannelCommand = new CreateChannelCommand(
-      createAttendeeCommandInput,
-    );
-
-    const createChannelResponse = await ivsClient.send(createChannelCommand);
-
     createMediaCapturePipelineCommandInput.Sources[0].ChimeSdkMeetingLiveConnectorConfiguration.Arn = `arn:aws:chime::${awsAccountId}:meeting:${meetingId}`;
-    createMediaCapturePipelineCommandInput.Sinks[0].RTMPConfiguration.Url =
-      'rtmps://' +
-      createChannelResponse.channel.ingestEndpoint +
-      ':443/app/' +
-      createChannelResponse.streamKey.value;
+    if (streamTarget == 'IVS') {
+      const createChannelCommand = new CreateChannelCommand(
+        createAttendeeCommandInput,
+      );
+
+      const createChannelResponse = await ivsClient.send(createChannelCommand);
+
+      createMediaCapturePipelineCommandInput.Sinks[0].RTMPConfiguration.Url =
+        'rtmps://' +
+        createChannelResponse.channel.ingestEndpoint +
+        ':443/app/' +
+        createChannelResponse.streamKey.value;
+    } else {
+      createMediaCapturePipelineCommandInput.Sinks[0].RTMPConfiguration.Url =
+        twitchIngest + twitchKey;
+    }
 
     console.log(JSON.stringify(createMediaCapturePipelineCommandInput));
-
     const createPipelineCommand = new CreateMediaLiveConnectorPipelineCommand(
       createMediaCapturePipelineCommandInput,
     );
@@ -121,25 +146,25 @@ exports.handler = async function (event, context) {
     );
 
     console.log(createPipelineResponse);
+    // const getStreamCommand = new GetStreamCommand({
+    //   channelArn: createChannelResponse.channel.arn,
+    // });
 
-    const getStreamCommand = new GetStreamCommand({
-      channelArn: createChannelResponse.channel.arn,
-    });
-
-    for (var m = 0; m < 5; m++) {
-      try {
-        await new Promise((resolve) => setTimeout(resolve, 5000));
-        const getStreamResponse = await ivsClient.send(getStreamCommand);
-        console.log(getStreamResponse);
-        break;
-      } catch (err) {
-        console.log(err);
-      }
-    }
-
+    // for (var m = 0; m < 5; m++) {
+    //   try {
+    //     await new Promise((resolve) => setTimeout(resolve, 5000));
+    //     const getStreamResponse = await ivsClient.send(getStreamCommand);
+    //     console.log(getStreamResponse);
+    //     break;
+    //   } catch (err) {
+    //     console.log(err);
+    //   }
+    // }
+    // await publish(createChannelResponse.channel.playbackUrl);
     response.statusCode = 200;
     response.body = JSON.stringify({
-      playbackUrl: createChannelResponse.channel.playbackUrl,
+      mediaPipelineId:
+        createPipelineResponse.MediaLiveConnectorPipeline.MediaPipelineId,
     });
     console.info('streamInfo: ' + JSON.stringify(response));
     return response;
@@ -244,3 +269,26 @@ async function checkForMeetings() {
     console.log('Error', err);
   }
 }
+
+// async function publish(data) {
+//   try {
+//     const grapqlData = await axios({
+//       url: GRAPHQL_ENDPOINT,
+//       method: 'post',
+//       headers: {
+//         'x-api-key': GRAPHQL_API_KEY,
+//       },
+//       data: {
+//         query: print(publishMutation),
+//         variables: {
+//           name: 'robots',
+//           data: JSON.stringify(data),
+//         },
+//       },
+//     });
+//     return grapqlData.data;
+//   } catch (err) {
+//     console.log(err);
+//     return null;
+//   }
+// }

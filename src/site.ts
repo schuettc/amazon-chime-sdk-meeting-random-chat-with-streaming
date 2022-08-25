@@ -1,12 +1,5 @@
 import { execSync, ExecSyncOptions } from 'child_process';
-import {
-  CfnOutput,
-  RemovalPolicy,
-  Stack,
-  StackProps,
-  DockerImage,
-  Fn,
-} from 'aws-cdk-lib';
+import { RemovalPolicy, DockerImage } from 'aws-cdk-lib';
 import {
   Distribution,
   SecurityPolicyProtocol,
@@ -16,29 +9,31 @@ import {
 import { S3Origin } from 'aws-cdk-lib/aws-cloudfront-origins';
 import { Bucket } from 'aws-cdk-lib/aws-s3';
 import { Source, BucketDeployment } from 'aws-cdk-lib/aws-s3-deployment';
-import {
-  AwsCustomResource,
-  PhysicalResourceId,
-  AwsCustomResourcePolicy,
-} from 'aws-cdk-lib/custom-resources';
 import { Construct } from 'constructs';
 import { copySync } from 'fs-extra';
 
-export class FrontEnd extends Stack {
-  constructor(scope: Construct, id: string, props: StackProps = {}) {
-    super(scope, id, props);
+interface SiteProps {
+  apiUrl: string;
+}
 
-    const siteBucket = new Bucket(this, 'websiteBucket', {
+export class Site extends Construct {
+  public readonly siteBucket: Bucket;
+  public readonly distribution: Distribution;
+
+  constructor(scope: Construct, id: string, props: SiteProps) {
+    super(scope, id);
+
+    this.siteBucket = new Bucket(this, 'websiteBucket', {
       publicReadAccess: false,
       removalPolicy: RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
     });
 
-    const distribution = new Distribution(this, 'CloudfrontDistribution', {
+    this.distribution = new Distribution(this, 'CloudfrontDistribution', {
       enableLogging: true,
       minimumProtocolVersion: SecurityPolicyProtocol.TLS_V1_2_2021,
       defaultBehavior: {
-        origin: new S3Origin(siteBucket),
+        origin: new S3Origin(this.siteBucket),
         viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         cachePolicy: CachePolicy.CACHING_DISABLED,
       },
@@ -76,40 +71,15 @@ export class FrontEnd extends Stack {
       },
     });
 
-    const importedApiUrl = Fn.importValue('randomChatWithStreamingApiUrl');
-
-    const configData = {
-      apiUrl: importedApiUrl,
+    const config = {
+      apiUrl: props.apiUrl,
     };
 
     new BucketDeployment(this, 'DeployBucket', {
-      sources: [bundle],
-      destinationBucket: siteBucket,
-      distribution: distribution,
+      sources: [bundle, Source.jsonData('config.json', config)],
+      destinationBucket: this.siteBucket,
+      distribution: this.distribution,
       distributionPaths: ['/*'],
-      prune: false,
     });
-
-    new AwsCustomResource(this, 'ConfigFrontEnd', {
-      onUpdate: {
-        service: 'S3',
-        action: 'putObject',
-        parameters: {
-          Body: JSON.stringify(configData),
-          Bucket: siteBucket.bucketName,
-          Key: 'config.json',
-        },
-        physicalResourceId: PhysicalResourceId.of(Date.now().toString()),
-      },
-      policy: AwsCustomResourcePolicy.fromSdkCalls({
-        resources: AwsCustomResourcePolicy.ANY_RESOURCE,
-      }),
-    });
-
-    new CfnOutput(this, 'distribution', {
-      value: distribution.domainName,
-    });
-
-    new CfnOutput(this, 'siteBucket', { value: siteBucket.bucketName });
   }
 }

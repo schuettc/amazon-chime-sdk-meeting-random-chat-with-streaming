@@ -9,6 +9,7 @@ import {
     LeaveMeeting,
     LocalVideo,
     Play,
+    Pause,
     AudioInputControl,
     RemoteVideo,
     DeviceLabels,
@@ -26,7 +27,6 @@ import Header from 'aws-northstar/components/Header';
 import './App.css';
 import { AmplifyConfig as config } from './Config';
 import { Amplify, API } from 'aws-amplify';
-import AmazonIVS from './IVS';
 import '@aws-amplify/ui-react/styles.css';
 Amplify.configure(config);
 Amplify.Logger.LOG_LEVEL = 'DEBUG';
@@ -37,8 +37,9 @@ const App = () => {
     const meetingStatus = useMeetingStatus();
     const [meetingId, setMeetingId] = useState('');
     const [attendeeId, setAttendeeId] = useState('');
-    const [playbackUrl, setPlaybackUrl] = useState('');
-
+    // const [playbackUrl, setPlaybackUrl] = useState('');
+    const [mediaPipelineId, setMediaPipelineId] = useState('');
+    const [streamStatus, setStreamStatus] = useState(false);
     const { tileId, isVideoEnabled, hasReachedVideoLimit, toggleVideo } = useLocalVideo();
     const { tiles } = useRemoteVideoTileState();
     const [remoteTileId, setRemoteTileId] = useState('');
@@ -72,28 +73,65 @@ const App = () => {
         label: 'Leave',
     };
 
-    const StreamButtonProps = {
-        icon: <Play />,
-        onClick: (event) => handleStream(event),
-        // onClick: (event) => {
-        //     setPlaybackUrl(
-        //         'https://fcc3ddae59ed.us-west-2.playback.live-video.net/api/video/v1/us-west-2.893648527354.channel.DmumNckWFTqz.m3u8',
-        //     );
-        //     console.log(playbackUrl);
-        // },
-        label: 'Stream',
+    const IVSButtonProps = {
+        icon: streamStatus ? <Pause /> : <Play />,
+        onClick: (event) => handleIVS(event),
+        label: 'IVS',
     };
 
-    const handleStream = async (event) => {
+    const TwitchButtonProps = {
+        icon: streamStatus ? <Pause /> : <Play />,
+        onClick: (event) => handleTwitch(event),
+        label: 'Twitch',
+    };
+    const handleIVS = async (event) => {
         event.preventDefault();
-        const streamResponse = await API.post('meetingApi', 'stream', {
-            body: {
-                meetingId: meetingId,
-            },
-        });
+        if (streamStatus) {
+            const streamResponse = await API.post('meetingApi', 'stream', {
+                body: {
+                    streamAction: 'delete',
+                    mediaPipelineId: mediaPipelineId,
+                },
+            });
+            console.log(streamResponse);
+            setStreamStatus(false);
+        } else {
+            const streamResponse = await API.post('meetingApi', 'stream', {
+                body: {
+                    meetingId: meetingId,
+                    streamTarget: 'IVS',
+                },
+            });
+            setMediaPipelineId(streamResponse.mediaPipelineId);
+            console.log(streamResponse);
+            setStreamStatus(true);
+        }
+    };
 
-        console.log(streamResponse);
-        setPlaybackUrl(streamResponse.playbackUrl);
+    const handleTwitch = async (event) => {
+        event.preventDefault();
+        if (streamStatus) {
+            const streamResponse = await API.post('meetingApi', 'stream', {
+                body: {
+                    streamAction: 'delete',
+                    mediaPipelineId: mediaPipelineId,
+                },
+            });
+            console.log(streamResponse);
+            setStreamStatus(false);
+        } else {
+            const streamResponse = await API.post('meetingApi', 'stream', {
+                body: {
+                    meetingId: meetingId,
+                    streamTarget: 'Twitch',
+                },
+            });
+            console.log(streamResponse);
+            setMediaPipelineId(streamResponse.mediaPipelineId);
+            setStreamStatus(true);
+        }
+
+        console.log(streamStatus);
     };
 
     const handleJoin = async (event) => {
@@ -128,7 +166,7 @@ const App = () => {
             <Header title="Amazon Chime SDK Meeting with Live Connector" />
 
             <div id="video">
-                <div style={{ padding: '1rem', height: '35vh', width: '70vh', boxSizing: 'border-box' }}>
+                <div style={{ padding: '1rem', height: '50vh', width: '`100vh', boxSizing: 'border-box' }}>
                     <VideoGrid size={2}>
                         <LocalVideo
                             nameplate="Me"
@@ -158,7 +196,10 @@ const App = () => {
                     <ControlBarButton {...LeaveButtonProps} />
                 </Cell>
                 <Cell gridArea="button">
-                    <ControlBarButton {...StreamButtonProps} />
+                    <ControlBarButton {...IVSButtonProps} />
+                </Cell>
+                <Cell gridArea="button">
+                    <ControlBarButton {...TwitchButtonProps} />
                 </Cell>
                 <Cell gridArea="button">
                     <AudioInputControl />
@@ -170,11 +211,6 @@ const App = () => {
                     <VideoInputControl />
                 </Cell>
             </ControlBar>
-            <div id="stream">
-                <div style={{ padding: '1rem', height: '20vh', boxSizing: 'border-box' }}>
-                    {playbackUrl.length > 0 && <AmazonIVS playbackUrl={playbackUrl} />}
-                </div>
-            </div>
         </NorthStarThemeProvider>
     );
 };
