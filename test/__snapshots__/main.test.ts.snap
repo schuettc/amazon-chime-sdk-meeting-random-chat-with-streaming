@@ -401,7 +401,7 @@ Object {
           },
         ],
         "SourceObjectKeys": Array [
-          "1673835c126819b0976c1ae1c8cb0d09f29b0f65932dd3c8fa8398fc7cf32abc.zip",
+          "8b7349682431b9ec30ee45d41226fc88be09a75bb1b56dde96be8f14a5806c65.zip",
           "54db0af5da74dab89a93c249167c5b162223925d4c9385ff9262a09b67c99244.zip",
         ],
       },
@@ -1306,19 +1306,20 @@ Object {
           "S3Bucket": Object {
             "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
           },
-          "S3Key": "68351e7144567881303055b73837914447f08952191d5274095118b80f726c03.zip",
+          "S3Key": "cc46abaf44cee47b39e0285f04a9f49ba26a83b7f820e8216c32a98cf1a286e9.zip",
         },
         "Environment": Object {
           "Variables": Object {
+            "AWS_ACCOUNT_ID": Object {
+              "Ref": "AWS::AccountId",
+            },
             "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1",
             "MEETINGS_TABLE": Object {
               "Ref": "infrastructuremeetings3685B870",
             },
-            "TWITCH_INGEST": "rtmp://ord02.contribute.live-video.net/app/",
-            "TWITCH_KEY": "live_675733637_s8eUGj95qIOI3iQmB849dyTEDwkj1V",
           },
         },
-        "Handler": "index.handler",
+        "Handler": "index.lambdaHandler",
         "Role": Object {
           "Fn::GetAtt": Array [
             "infrastructureinfrastructureRole7CDA6EE1",

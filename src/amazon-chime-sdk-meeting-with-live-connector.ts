@@ -5,27 +5,15 @@ import { Site, Infrastructure } from './index';
 export class AmazonChimeSDKWithLiveConnector extends Stack {
   constructor(scope: Construct, id: string, props: StackProps = {}) {
     super(scope, id, props);
-    // const appSync = new AppSync(this, 'AppSync');
-
     const infrastructure = new Infrastructure(this, 'infrastructure');
 
     const site = new Site(this, 'Site', { apiUrl: infrastructure.apiUrl });
 
-    // const broadcastSite = new BroadcastSite(this, 'BroadcastSite', {
-    //   graphqlApi: appSync.graphqlApi,
-    // });
-
     new CfnOutput(this, 'distribution', {
       value: site.distribution.domainName,
     });
-    // new CfnOutput(this, 'broadcastDistribution', {
-    //   value: broadcastSite.distribution.domainName,
-    // });
 
     new CfnOutput(this, 'siteBucket', { value: site.siteBucket.bucketName });
-    // new CfnOutput(this, 'broadcastSiteBucket', {
-    //   value: broadcastSite.siteBucket.bucketName,
-    // });
   }
 }
 const devEnv = {

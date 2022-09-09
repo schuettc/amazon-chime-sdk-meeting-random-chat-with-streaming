@@ -1,5 +1,4 @@
-// import { GraphqlApi } from '@aws-cdk/aws-appsync-alpha';
-import { Duration, RemovalPolicy } from 'aws-cdk-lib';
+import { Duration, RemovalPolicy, Stack } from 'aws-cdk-lib';
 import {
   RestApi,
   LambdaIntegration,
@@ -61,7 +60,7 @@ export class Infrastructure extends Construct {
     });
 
     const meetingLambda = new NodejsFunction(this, 'meetingLambda', {
-      entry: 'resources/meetingInfo/meetingInfo.js',
+      entry: 'src/resources/meetingInfo/meetingInfo.ts',
       bundling: {
         nodeModules: [
           '@aws-sdk/client-chime-sdk-meetings',
@@ -71,14 +70,16 @@ export class Infrastructure extends Construct {
           '@aws-sdk/client-chime-sdk-media-pipelines',
         ],
       },
+      handler: 'lambdaHandler',
       runtime: Runtime.NODEJS_16_X,
       architecture: Architecture.ARM_64,
       role: infrastructureRole,
       timeout: Duration.seconds(60),
       environment: {
         MEETINGS_TABLE: meetingsTable.tableName,
-        TWITCH_INGEST: 'rtmp://ord02.contribute.live-video.net/app/',
-        TWITCH_KEY: 'live_675733637_s8eUGj95qIOI3iQmB849dyTEDwkj1V',
+        AWS_ACCOUNT_ID: Stack.of(this).account,
+        // TWITCH_INGEST: 'rtmp://ord02.contribute.live-video.net/app/',
+        // TWITCH_KEY: 'live_675733637_s8eUGj95qIOI3iQmB849dyTEDwkj1V',
         // GRAPHQL_URL: props.graphqlApi.graphqlUrl,
         // API_KEY: props.graphqlApi.apiKey!,
       },

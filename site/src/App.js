@@ -4,12 +4,12 @@ import {
     useLocalVideo,
     ControlBar,
     ControlBarButton,
-    Cell,
     Meeting,
     LeaveMeeting,
     LocalVideo,
     Play,
     Pause,
+    Remove,
     AudioInputControl,
     RemoteVideo,
     DeviceLabels,
@@ -20,6 +20,7 @@ import {
     useDeviceLabelTriggerStatus,
     useRemoteVideoTileState,
     useMeetingStatus,
+    Laptop,
 } from 'amazon-chime-sdk-component-library-react';
 import { MeetingSessionConfiguration } from 'amazon-chime-sdk-js';
 import NorthStarThemeProvider from 'aws-northstar/components/NorthStarThemeProvider';
@@ -37,10 +38,10 @@ const App = () => {
     const meetingStatus = useMeetingStatus();
     const [meetingId, setMeetingId] = useState('');
     const [attendeeId, setAttendeeId] = useState('');
-    // const [playbackUrl, setPlaybackUrl] = useState('');
+    const [playbackUrl, setPlaybackUrl] = useState('');
     const [mediaPipelineId, setMediaPipelineId] = useState('');
     const [streamStatus, setStreamStatus] = useState(false);
-    const { tileId, isVideoEnabled, hasReachedVideoLimit, toggleVideo } = useLocalVideo();
+    const { toggleVideo } = useLocalVideo();
     const { tiles } = useRemoteVideoTileState();
     const [remoteTileId, setRemoteTileId] = useState('');
 
@@ -69,8 +70,14 @@ const App = () => {
 
     const LeaveButtonProps = {
         icon: <LeaveMeeting />,
-        onClick: (event) => toggleVideo(event),
+        onClick: (event) => handleLeave(event),
         label: 'Leave',
+    };
+
+    const EndButtonProps = {
+        icon: <Remove />,
+        onClick: (event) => handleEnd(event),
+        label: 'End',
     };
 
     const IVSButtonProps = {
@@ -79,11 +86,31 @@ const App = () => {
         label: 'IVS',
     };
 
-    const TwitchButtonProps = {
-        icon: streamStatus ? <Pause /> : <Play />,
-        onClick: (event) => handleTwitch(event),
-        label: 'Twitch',
+    const StreamButtonProps = {
+        icon: <Laptop />,
+        onClick: () => handleOpenIVSPlayer(),
+        label: 'View',
     };
+
+    const handleOpenIVSPlayer = async () => {
+        window.open(`https://debug.ivsdemos.com/?p=jwp&url=${playbackUrl}`, '_blank');
+    };
+
+    const handleLeave = async () => {
+        await meetingManager.leave();
+    };
+
+    const handleEnd = async (event) => {
+        event.preventDefault();
+        try {
+            await API.post('meetingApi', 'end', { body: { meetingId: meetingId } });
+            setStreamStatus(false);
+            setPlaybackUrl('');
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
     const handleIVS = async (event) => {
         event.preventDefault();
         if (streamStatus) {
@@ -95,6 +122,7 @@ const App = () => {
             });
             console.log(streamResponse);
             setStreamStatus(false);
+            setPlaybackUrl('');
         } else {
             const streamResponse = await API.post('meetingApi', 'stream', {
                 body: {
@@ -103,35 +131,10 @@ const App = () => {
                 },
             });
             setMediaPipelineId(streamResponse.mediaPipelineId);
+            setPlaybackUrl(streamResponse.playbackUrl);
             console.log(streamResponse);
             setStreamStatus(true);
         }
-    };
-
-    const handleTwitch = async (event) => {
-        event.preventDefault();
-        if (streamStatus) {
-            const streamResponse = await API.post('meetingApi', 'stream', {
-                body: {
-                    streamAction: 'delete',
-                    mediaPipelineId: mediaPipelineId,
-                },
-            });
-            console.log(streamResponse);
-            setStreamStatus(false);
-        } else {
-            const streamResponse = await API.post('meetingApi', 'stream', {
-                body: {
-                    meetingId: meetingId,
-                    streamTarget: 'Twitch',
-                },
-            });
-            console.log(streamResponse);
-            setMediaPipelineId(streamResponse.mediaPipelineId);
-            setStreamStatus(true);
-        }
-
-        console.log(streamStatus);
     };
 
     const handleJoin = async (event) => {
@@ -189,27 +192,14 @@ const App = () => {
                 </div>
             </div>
             <ControlBar showLabels={true} responsive={true} layout="undocked-horizontal" css="margin: 10px">
-                <Cell gridArea="button">
-                    <ControlBarButton {...JoinButtonProps} />
-                </Cell>
-                <Cell gridArea="button">
-                    <ControlBarButton {...LeaveButtonProps} />
-                </Cell>
-                <Cell gridArea="button">
-                    <ControlBarButton {...IVSButtonProps} />
-                </Cell>
-                <Cell gridArea="button">
-                    <ControlBarButton {...TwitchButtonProps} />
-                </Cell>
-                <Cell gridArea="button">
-                    <AudioInputControl />
-                </Cell>
-                <Cell gridArea="button">
-                    <AudioOutputControl />
-                </Cell>
-                <Cell gridArea="button">
-                    <VideoInputControl />
-                </Cell>
+                <ControlBarButton {...JoinButtonProps} />
+                <ControlBarButton {...LeaveButtonProps} />
+                <ControlBarButton {...EndButtonProps} />
+                <ControlBarButton {...IVSButtonProps} />
+                <AudioInputControl />
+                <AudioOutputControl />
+                <VideoInputControl />
+                {playbackUrl && <ControlBarButton {...StreamButtonProps} />}
             </ControlBar>
         </NorthStarThemeProvider>
     );
